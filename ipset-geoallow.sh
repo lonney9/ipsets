@@ -2,7 +2,7 @@
 
 # Geo whitelist ipsets script, drops connections from countries NOT whitelisted
 # See https://www.ipdeny.com/ipblocks/ for list
-# Should to variablize country codes (line 20), file paths, ipset name, and iptables cmd to make it nice
+# Should to variablize country codes (line 25), file paths, ipset name, and iptables cmd to make it nice
 # Run on system boot, and schdule with cron once per day
 # crontab (note - paths iptables, ipset, curl, xargs need to be full path for cron to find them):
 # ipset geo whitelist update (12:07pm UTC / 4.07am PT)
