@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Tor exit node ipsets blocklist
-# Should to variablize country codes (line 20), file paths, ipset name, and iptables cmd to make it nice
+# Should to variablize file paths, ipset name, and iptables cmd to make it nice
 # Run on system boot, and schdule with cron once per day
 # crontab (note - paths iptables, ipset, curl, xargs need to be full path for cron to find them):
 # ipset tor exit node blocklst update (12:17pm UTC / 4.17am PT)
