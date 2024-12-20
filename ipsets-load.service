@@ -1,0 +1,20 @@
+# systemd service file to load ipsets on startup
+# Save as /etc/systemd/system/ipsets-load.service
+# Run next two cmds to enable service
+# systemctl daemon-reload
+# systemctl enable ipsets-load.servie
+# reboot or, systemctl start ipsets-load.service
+# Show status, systemctl status ipsets-load.service
+
+[Unit]
+Description=Load ipsets on startup
+After=network.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/etc/iptables/ipsets/ipset-geoallow.sh
+ExecStart=/etc/iptables/ipsets/ipset-torblock.sh
+
+[Install]
+WantedBy=default.target
