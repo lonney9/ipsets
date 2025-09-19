@@ -2,7 +2,7 @@
 # Save as /etc/systemd/system/ipsets-load.service
 # Run next two cmds to enable service
 # systemctl daemon-reload
-# systemctl enable ipsets-load.servie
+# systemctl enable ipsets-load.service
 # reboot or, systemctl start ipsets-load.service
 # Show status, systemctl status ipsets-load.service
 
