@@ -25,8 +25,10 @@ We can also limit the number of repeated connections to SSH and start dropping n
 This is very simple with two rules placed above the existing SSH accept rule, add this to `/etc/iptables/rules.v4` (change interface name ens3 as needed):
 
 ```bash
--A INPUT -i ens3 -p tcp --dport 22 -m recent --update --seconds 60 --hitcount 3 --name SSH --rsource -j DROP
--A INPUT -i ens3 -p tcp --dport 22 -m recent --set --name SSH --rsource -j ACCEPT
+-A INPUT -i enp0s6 -p tcp -m tcp --dport 22 -m recent --update --seconds 300 --hitcount 3 --name SSH --mask 255.255.255.255 --rsource -m comment --comment "SSH limiter" -j DROP
+-A INPUT -i enp0s6 -p tcp -m tcp --dport 22 -m recent --set --name SSH --mask 255.255.255.255 --rsource -m comment --comment "SSH limiter" -j ACCEPT
+-A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -m comment --comment "SSH limiter" -j ACCEPT
+
 ```
 
 After three connection attempts with-in 60 seconds from the same IP address, new connections will be dropped for 60 seconds. After that time connections will be accepted again. This slows down and stops most brute force attempts for example
