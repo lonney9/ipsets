@@ -2,7 +2,7 @@
 
 ## ipsets-geoallow.sh ##
 # //github.com/lonney9/ipsets
-# version 1.1 (ITS UGLY AND IT WORKS)
+# version 2.0 (ITS UGLY AND IT WORKS)
 
 # Geo allow downloads netblocks of countries to whitelist using an inverted DROP rule.
 # Designed to be self sufficient to load, update and save ipsets. 
@@ -13,12 +13,13 @@
 # Self contained script that will load a saved set on first run.
 # Or if no saved ipset found, download, add and save the set.
 # Or update existing running ipset, save and reload it.
+# Works with command line, systemd, and cron
 
-# This is a simple "batch style" script that works with systemd and cron.
-# My goal is to get a nicely written script working with vars and functions etc later (version 2)
+# This is a simple "batch style" script.
+# My goal is to get a nicely written script working with vars and functions etc next (version 2)
 
 # Cron
-# Note: "!" is escaped with "\!", cron needs it.
+
 # ipset geo whitelist update (12:07pm UTC / 4.07am PT)
   # 7 12 * * * /bin/bash /etc/iptables/ipsets/ipset-geoallow.sh > /etc/iptables/ipsets/geoallow.log 2>&1
 
@@ -43,33 +44,45 @@ echo " "
 # This single if with a two-way branch, handles three conditions
 #   Load from file after boot / no saved file (attempt download) / update running system (schedule the script as is) 
 
-if \! /usr/sbin/iptables -C INPUT -i enp0s6 -m set \! --match-set geoallow src -j DROP 2>/dev/null && [ -f /etc/iptables/ipsets/geoallow.ipset ]; then
-  echo "[ ** iptables rule does not exist, ipset file found ]"
+# Stupid cron - escape the "!" ("\!") where needed 
+if [ -t 1 ]; then
+        echo "Detected: Interactive shell"
+        IPT_NOT='!'
+elif [ -n "$INVOCATION_ID" ]; then
+        echo "Detected: systemd"
+        IPT_NOT='!'
+else
+        echo "Detected: cron / non-interactive"
+        IPT_NOT='\!'
+fi
+
+if ! /usr/sbin/iptables -C INPUT -i enp0s6 -m set $IPT_NOT --match-set geoallow src -j DROP 2>/dev/null && [ -f /etc/iptables/ipsets/geoallow.ipset ]; then
+  echo "[ ** iptables rule does not exist and ipset file found ]"
   echo "[ restore ipset from file ]"
     # Delete the fw rules and running ipset incase it's present or add checks to script to handle it better
-  /usr/sbin/iptables -D INPUT -i enp0s6 -m set \! --match-set geoallow src -j DROP
+  /usr/sbin/iptables -D INPUT -i enp0s6 -m set $IPT_NOT --match-set geoallow src -j DROP
   /usr/sbin/ipset -X geoallow
   /usr/sbin/ipset restore -file /etc/iptables/ipsets/geoallow.ipset
   echo " "
   echo "* * *"
   echo " "
-  /usr/sbin/ipset list geoallow | /usr/bin/head -n 7
+  /usr/sbin/ipset list geoallow | /usr/bin/head -n 9
   echo " "
   echo "* * *"
   echo " "
     # Add firewall rule in position 7
   echo "[ add fw rule ]"
-  /usr/sbin/iptables -I INPUT 8 -i enp0s6 -m set \! --match-set geoallow src -j DROP
+  /usr/sbin/iptables -I INPUT 8 -i enp0s6 -m set $IPT_NOT --match-set geoallow src -j DROP
 
   else
     # update and save (either the rule is present (running system) OR the file is missing, download to refresh and save.
-  echo "[ ** fw rule loaded or saved ipset does not exist ]"
+  echo "[ ** fw rule loaded (running system - attempt refresh) or saved ipset does not exist (attempt to download and save ipset)]"
   echo "[ attempt update and save - download + load + save new ipset file ]"
 
 
   ##  START DOWNLOAD CODE  ##
 
-  /usr/sbin/iptables -D INPUT -i enp0s6 -m set \! --match-set geoallow src -j DROP
+  /usr/sbin/iptables -D INPUT -i enp0s6 -m set $IPT_NOT --match-set geoallow src -j DROP
   /usr/sbin/ipset -X geoallow
   /usr/sbin/ipset -N geoallow nethash maxelem 131072
 
@@ -78,7 +91,7 @@ if \! /usr/sbin/iptables -C INPUT -i enp0s6 -m set \! --match-set geoallow src -
     echo "${i}"
     /usr/bin/curl -k -s -S "https://www.ipdeny.com/ipblocks/data/countries/${i}.zone" | /usr/bin/xargs -n 1 /usr/sbin/ipset -A geoallow
 
-    if [ \! "$?" = 0 ]; then
+    if [ ! "$?" = 0 ]; then
       # try and reload a saved ipset (in the event an update to a running set fails, put the old one back)
       # in cases where there is no saved ipset set, this is the end of the line..
 
@@ -89,7 +102,7 @@ if \! /usr/sbin/iptables -C INPUT -i enp0s6 -m set \! --match-set geoallow src -
         echo "[ loading saved ipset ]"
         /usr/sbin/ipset -X geoallow
         /usr/sbin/ipset restore -file /etc/iptables/ipsets/geoallow.ipset
-        /usr/sbin/iptables -I INPUT 8 -i enp0s6 -m set \! --match-set geoallow src -j DROP
+        /usr/sbin/iptables -I INPUT 8 -i enp0s6 -m set $IPT_NOT --match-set geoallow src -j DROP
         exit 0
 
         else 
@@ -109,14 +122,14 @@ if \! /usr/sbin/iptables -C INPUT -i enp0s6 -m set \! --match-set geoallow src -
   echo " "
   echo "* * *"
   echo " "
-  /usr/sbin/ipset list geoallow | /usr/bin/head -n 7
+  /usr/sbin/ipset list geoallow | /usr/bin/head -n 9
   echo " "
   echo "* * *"
   echo " "
 
   # Add firewall rule in position 8
   echo "[ add fw rule ]"
-  /usr/sbin/iptables -I INPUT 8 -i enp0s6 -m set \! --match-set geoallow src -j DROP
+  /usr/sbin/iptables -I INPUT 8 -i enp0s6 -m set $IPT_NOT --match-set geoallow src -j DROP
   echo "[ saving new ipset to file ]"
   /usr/sbin/ipset save geoallow -file /etc/iptables/ipsets/geoallow.ipset
 
