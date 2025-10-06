@@ -31,4 +31,4 @@ This is very simple with two rules placed above the existing SSH accept rule, ad
 
 ```
 
-After three connection attempts with-in 60 seconds from the same IP address, new connections will be dropped for 60 seconds. After that time connections will be accepted again. This slows down and stops most brute force attempts for example
+After three connection attempts with-in 300 seconds from the same IP address, new connections will be dropped for 300 seconds. After that time connections will be accepted again. This slows down and stops most brute force attempts for example
