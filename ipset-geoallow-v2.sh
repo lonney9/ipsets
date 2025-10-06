@@ -44,17 +44,8 @@ echo " "
 # This single if with a two-way branch, handles three conditions
 #   Load from file after boot / no saved file (attempt download) / update running system (schedule the script as is) 
 
-# Stupid cron - escape the "!" ("\!") where needed 
-if [ -t 1 ]; then
-        echo "Detected: Interactive shell"
-        IPT_NOT='!'
-elif [ -n "$INVOCATION_ID" ]; then
-        echo "Detected: systemd"
-        IPT_NOT='!'
-else
-        echo "Detected: cron / non-interactive"
-        IPT_NOT='\!'
-fi
+# Stupid cron - var escapes the "!" for cron/sh which otherwise needs "\!"
+IPT_NOT='!'
 
 if ! /usr/sbin/iptables -C INPUT -i enp0s6 -m set $IPT_NOT --match-set geoallow src -j DROP 2>/dev/null && [ -f /etc/iptables/ipsets/geoallow.ipset ]; then
   echo "[ ** iptables rule does not exist and ipset file found ]"

@@ -22,7 +22,7 @@ These scripts are designed to be self sufficient:
 
 We can also limit the number of repeated connections to SSH and start dropping new connections if the limit is exceeded.
 
-This is very simple with two rules placed above the existing SSH accept rule, add this to `/etc/iptables/rules.v4` (change interface name ens3 as needed):
+This is very simple with three rules (first two when placed above the existing SSH accept rule), add this to `/etc/iptables/rules.v4` (change interface name ens3 as needed):
 
 ```bash
 -A INPUT -i enp0s6 -p tcp -m tcp --dport 22 -m recent --update --seconds 300 --hitcount 3 --name SSH --mask 255.255.255.255 --rsource -m comment --comment "SSH limiter" -j DROP
